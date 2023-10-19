@@ -1,0 +1,133 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Generador de Imágenes DALL-E y Descripciones ChatGPT</title>
+    <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/4.5.2/css/bootstrap.min.css">
+    <style>
+        .descripcion-container {
+    background-color: #7373f6;
+    color: white;
+    padding: 10px;
+    border-radius: 5px;
+    margin: 0 auto;
+    width: 50%;
+    text-align: center;
+    display: flex; /* Habilita el uso de Flexbox */
+    justify-content: center; /* Centra horizontalmente */
+}
+        h1 {
+            text-align: center;
+            font-size: 20px;
+            font-weight: bold;
+            margin-top: 100px;
+        }
+        .carousel-inner img {
+        display: block;
+        margin: 0 auto; /* Centra horizontalmente la imagen en el carrusel */
+        max-width: 50%; /* Establece el tamaño máximo al 100% del contenedor */
+        height: 250px; /* Permite que la altura se ajuste automáticamente */
+        }
+    </style>
+</head>
+<body>
+    <h1 style="text-align: center; margin-top: 20px;">Generador de Imágenes DALL-E y Descripciones ChatGPT</h1><p>
+
+
+<p><div style="display: flex; justify-content: center;">
+<form id="imagenForm" action="/" method="POST" >
+        <label for="descripcion"  style="font-weight: bold;" >Ingresa la descripción de la imagen:</label>
+        <input  style=" border-radius: 5px; background-color: #7373f6 "  type="text" id="descripcion" name="descripcion" required>
+
+        <label for="numeroImagenes" style="font-weight: bold;">No.</label>
+        <input style=" border-radius: 5px; width: 50px;  background-color: #7373f6"  type="number" id="numeroImagenes" name="numeroImagenes" required>
+
+        <button  type="submit" style=" border-radius: 5px;  background-color: #7373f6; color: aliceblue; font-weight: bold; ">Generar</button>
+    </form>
+</div>
+
+    <div id="respuestasCarousel" class="carousel slide" data-ride="carousel">
+        <ol id="carouselIndicators" class="carousel-indicators">
+        </ol>
+        <div id="carouselInner" class="carousel-inner">
+        </div>
+        <a class="carousel-control-prev" href="#respuestasCarousel" role="button" data-slide="prev">
+            <span class="carousel-control-prev-icon" ariahidden="true"></span>
+            <span class="sr-only">Anterior</span>
+        </a>
+        <a class="carousel-control-next" href="#respuestasCarousel" role="button" data-slide="next">
+            <span class="carousel-control-next-icon" ariahidden="true"></span>
+            <span class="sr-only">Siguiente</span>
+        </a>
+    </div>
+<textarea id="descripcionGenerada" class="descripcion-container" rows="4" readonly style="margin: 0 auto;"></textarea>
+
+
+    <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.5.1/jquery.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/popper.js/1.16.0/umd/popper.min.js"></script>
+    <script src="https://maxcdn.bootstrapcdn.com/bootstrap/4.5.2/js/bootstrap.min.js"></script>
+
+    <script>
+        // Escuchar el evento de envío del formulario
+        document.getElementById("imagenForm").addEventListener("submit", function (event) {
+            event.preventDefault(); // Evita el envío del formulario por defecto
+
+            // Obtener los valores del formulario
+            const descripcion = document.getElementById("descripcion").value;
+            const numeroImagenes = document.getElementById("numeroImagenes").value;
+
+            // Realizar una solicitud POST al servidor Flask
+            fetch("/", {
+                method: "POST",
+                body: JSON.stringify({ descripcion, numeroImagenes }),
+                headers: {
+                    "Content-Type": "application/json"
+                }
+            })
+            .then(response => response.json())
+            .then(data => {
+                // Mostrar la descripción generada y las respuestas en el carrusel
+                descripcionGenerada.value = `Descripción Generada: ${data.descripcion_generada}`;
+                const carruselInner = document.getElementById("carouselInner");
+                const carouselIndicators = document.getElementById("carouselIndicators");
+
+
+                carruselInner.innerHTML = "";
+                carouselIndicators.innerHTML = "";
+
+                // Agregar la descripción generada al rectángulo en  azul
+                descripcionGenerada.innerHTML = `Descripción Generada: ${data.descripcion_generada}`;
+
+                // Agregar las imágenes generadas al carrusel
+                data.imagenes.forEach((url, index) => {
+                    const imagenDiv = document.createElement("div");
+                    imagenDiv.classList.add("carousel-item");
+                    if (index === 0) {
+                        imagenDiv.classList.add("active"); // Establece la primera imagen como activa
+                    }
+
+                    const imagen = document.createElement("img");
+                    imagen.src = url;
+                    imagen.alt = `Imagen ${index + 1}`;
+                    imagenDiv.appendChild(imagen);
+
+                    carruselInner.appendChild(imagenDiv);
+
+                    // Agregar un indicador para la imagen
+                    const indicator = document.createElement("li");
+                    indicator.setAttribute("data-target", "#respuestasCarousel");
+                    indicator.setAttribute("data-slide-to", index.toString());
+                    if (index === 0) {
+                        indicator.classList.add("active"); // Establece el primer indicador como activo
+                    }
+                    carouselIndicators.appendChild(indicator);
+                });
+
+                // Inicializar el carrusel
+                $("#respuestasCarousel").carousel();
+            });
+        });
+    </script>
+</body>
+</html>
